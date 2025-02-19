@@ -1,0 +1,11 @@
+# Streamlit app data
+.streamlit/
+
+# Python
+*.egg
+*.egg-info
+*.whl
+*.zip
+__pycache__/
+
+.venv/
