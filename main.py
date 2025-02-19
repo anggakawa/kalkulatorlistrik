@@ -128,33 +128,43 @@ def main():
                 help="Masukkan nama atau lokasi perangkat untuk identifikasi"
             )
 
-            tab1, tab2 = st.tabs(["📱 Pilih dari Daftar", "⚡ Input Manual"])
+            selected_appliance = st.selectbox(
+                "Pilih perangkat dari daftar",
+                options=list(COMMON_APPLIANCES.keys()),
+                help="Pilih perangkat dari daftar umum perangkat rumah tangga"
+            )
+            power = COMMON_APPLIANCES[selected_appliance]
+            if power > 0:
+                st.info(f"💡 Daya: {power} watt")
             
-            with tab1:
-                selected_appliance = st.selectbox(
-                    "Pilih perangkat dari daftar",
-                    options=list(COMMON_APPLIANCES.keys()),
-                    help="Pilih perangkat dari daftar umum perangkat rumah tangga"
-                )
-                power = COMMON_APPLIANCES[selected_appliance]
-                if power > 0:
-                    st.info(f"💡 Daya: {power} watt")
-                
-                custom_power = st.number_input(
-                    "Sesuaikan daya (watt)",
-                    min_value=0,
-                    value=power if power > 0 else 0,
-                    help="Sesuaikan daya sesuai dengan spesifikasi perangkat Anda"
-                )
-            
-            with tab2:
-                power_watts = st.number_input(
-                    "Masukkan daya (Watt)",
-                    min_value=0.0,
-                    value=100.0,
-                    help="Masukkan daya dalam Watt sesuai spesifikasi perangkat"
-                )
+            st.markdown("##### Input Manual")
+            custom_power = st.number_input(
+                "Sesuaikan daya (watt)",
+                min_value=0,
+                value=power if power > 0 else 0,
+                help="Sesuaikan daya sesuai dengan spesifikasi perangkat Anda"
+            )
 
+            st.markdown("##### Input berdasarkan Tegangan dan Arus")
+            voltage = st.number_input(
+                "Masukkan tegangan (Volt)",
+                min_value=0.0,
+                value=220.0,
+                help="Masukkan tegangan dalam Volt (default: 220V)"
+            )
+            ampere = st.number_input(
+                "Masukkan arus (Ampere)",
+                min_value=0.0,
+                value=0.0,
+                step=0.1,
+                help="Masukkan arus dalam Ampere"
+            )
+            
+            # Calculate power if voltage and ampere are provided
+            if ampere > 0:
+                calculated_power = voltage * ampere
+                st.info(f"💡 Daya terhitung dari V×A: {calculated_power:.1f} watt")
+        
         # Bagian Pola Penggunaan
         with st.expander("⏰ Pola Penggunaan", expanded=True):
             usage_pattern = st.radio(
@@ -208,11 +218,16 @@ def main():
             if not name:
                 st.error("⚠️ Mohon masukkan nama perangkat!")
                 return
-                
-            if tab1._active:
-                final_power = custom_power
+
+            if ampere > 0 and custom_power > 0:
+                st.error("⚠️ Ambil salah satu antara hitung daya ampere atau masukkan daya sendiri!")
+                return
+
+            # Determine final power based on inputs
+            if ampere > 0:
+                final_power = calculated_power
             else:
-                final_power = power_watts
+                final_power = custom_power
 
             if final_power <= 0:
                 st.error("⚠️ Daya perangkat harus lebih dari 0 watt!")
